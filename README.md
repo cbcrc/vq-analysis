@@ -10,6 +10,16 @@ This project aims to provide reproducible utilities for:
 
 The project is under active development.
 
+## Installation
+
+Clone the repository and install the package in editable mode.
+
+git clone https://github.com/cbcrc/vq-analysis.git  
+cd vq-analysis  
+pip install -e .
+
+This installs the `vq` command line tool.
+
 ## Usage
 
 ### Upscale ladder outputs

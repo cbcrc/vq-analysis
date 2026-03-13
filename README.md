@@ -1,6 +1,11 @@
 # VQ Analysis
 
-The `scripts` folder contains two files:
+Tools for video quality analysis and bitrate ladder evaluation.
 
-1. `compute_metrics.bash`: This bash script will compute the metrics and produce JSON files
-1. `appear_vs_nevion_analysis.ipynb`: This jupyter notebook will compile all the JSON files and produce plots like the ones I showed during the presentation.
+This project aims to provide reproducible utilities for:
+- upscaling ladder outputs to a common reference resolution
+- computing objective quality metrics
+- generating RD plots
+- comparing bitrate ladder designs and encoder configurations
+
+The project is under active development.

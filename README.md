@@ -9,3 +9,25 @@ This project aims to provide reproducible utilities for:
 - comparing bitrate ladder designs and encoder configurations
 
 The project is under active development.
+
+## Usage
+
+### Upscale ladder outputs
+
+Upscale encoded ladder outputs to a common reference resolution.
+
+Example:
+
+```bash
+vq upscale \
+  -I outputs/ladder_encodes \
+  -i "**/*.mp4" \
+  -o outputs/ladder_encodes_upscaled
+```
+
+This will:
+
+- recursively find encoded files (in this case all `.mp4` files in each subfolder)
+- upscale them to **1920×1080**
+- preserve the original directory structure
+- encode the intermediate files using **FFV1** (a lossless video codec)

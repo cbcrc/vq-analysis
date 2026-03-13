@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vq-analysis"
+version = "0.1.0"
+description = "Tools for evaluating bitrate ladders and rate-distortion performance"
+readme = "README.md"
+requires-python = ">=3.9"
+
+authors = [
+    { name = "Luc Trudeau" }
+]
+
+keywords = [
+    "video",
+    "compression",
+    "rate-distortion",
+    "bitrate-ladder",
+    "vmaf",
+    "ffmpeg"
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Scientific/Engineering"
+]
+
+dependencies = [
+    "tqdm"
+]
+
+[project.urls]
+Homepage = "https://github.com/cbcrc/vq-analysis"
+Issues = "https://github.com/cbcrc/vq-analysis/issues"
+
+[project.scripts]
+vq = "vq.cli:main"

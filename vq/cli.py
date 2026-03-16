@@ -15,6 +15,13 @@ from vq.upscale import UpscaleOptions, upscale_batch
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_REFERENCE_EXTENSIONS = (
+    ".mkv",
+    ".y4m",
+    ".mp4",
+    ".mov",
+)
+
 
 def _configure_logging(debug: bool = False, quiet: bool = False) -> None:
     if debug and quiet:
@@ -91,6 +98,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "--reference-root",
         required=True,
         help="Root directory for reference files.",
+    )
+    metrics_parser.add_argument(
+        "--ref-ext",
+        action="append",
+        help="Reference file extension(s) to try when resolving reference files "
+        "(e.g. --ref-ext .mxf --ref-ext .mkv).",
     )
     metrics_parser.add_argument(
         "-i",
@@ -257,6 +270,7 @@ def _run_metrics(args: argparse.Namespace) -> int:
     input_root = Path(args.input_root).resolve()
     reference_root = Path(args.reference_root).resolve()
     output_root = Path(args.output).resolve()
+    ref_exts = args.ref_ext or DEFAULT_REFERENCE_EXTENSIONS
 
     logger.debug("Metrics input root: %s", input_root)
     logger.debug("Metrics reference root: %s", reference_root)
@@ -289,6 +303,7 @@ def _run_metrics(args: argparse.Namespace) -> int:
             dist_path=dist_path,
             input_root=input_root,
             reference_root=reference_root,
+            reference_extensions=ref_exts,
         )
 
         log_path = make_metrics_output_path(

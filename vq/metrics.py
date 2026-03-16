@@ -5,6 +5,7 @@ import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 from vq.ffmpeg import FFmpegRunner
 
@@ -23,15 +24,20 @@ class MetricsOptions:
 
 
 def infer_reference_path(
-    dist_path: Path, input_root: Path, reference_root: Path
+    dist_path: Path,
+    input_root: Path,
+    reference_root: Path,
+    reference_extensions: Iterable[str],
 ) -> Path:
     rel_path = dist_path.relative_to(input_root)
-
-    if not rel_path.parts:
-        raise ValueError(f"Cannot infer reference path for {dist_path}")
-
     clip_name = rel_path.parts[0]
-    return reference_root / f"{clip_name}.mkv"
+
+    for ext in reference_extensions:
+        candidate = reference_root / f"{clip_name}{ext}"
+        if candidate.exists():
+            return candidate
+
+    return reference_root / f"{clip_name}{reference_extensions[0]}"
 
 
 def build_libvmaf_feature_string(options: MetricsOptions) -> str:

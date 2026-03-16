@@ -20,24 +20,99 @@ pip install -e .
 
 This installs the `vq` command line tool.
 
-## Usage
+Requirements:
+  - Python ≥ 3.10
+  - FFmpeg compiled with libvmaf
 
-### Upscale ladder outputs
+You can check libvmaf support with:
 
-Upscale encoded ladder outputs to a common reference resolution.
+```bash
+ffmpeg -filters | grep vmaf
+```
 
-Example:
+## Workflow Overview
+
+Typical evaluation pipeline:
+
+```
+encoded ladder outputs
+        │
+        ▼
+vq upscale
+        │
+        ▼
+upscaled FFV1 intermediates
+        │
+        ▼
+vq metrics
+        │
+        ▼
+VMAF / PSNR / MS-SSIM JSON logs
+```
+
+The intermediate files use FFV1, a lossless codec, so that scaling artifacts do not contaminate metric evaluation.
+
+## Step 1 — Upscale ladder outputs
+
+Example input structure:
+
+```
+outputs/bitrate_ladder_folder/
+├── DOTA2_60f_420_1080p30_ffv1/
+│   ├── 216p_256k.mp4
+│   ├── 360p_512k.mp4
+│   └── ...
+```
+
+Run:
 
 ```bash
 vq upscale \
-  -I outputs/ladder_encodes \
+  -I outputs/bitrate_ladder_folder \
   -i "**/*.mp4" \
-  -o outputs/ladder_encodes_upscaled
+  -o outputs/bitrate_ladder_folder_upscaled
 ```
 
-This will:
+Example output:
 
-- recursively find encoded files (in this case all `.mp4` files in each subfolder)
-- upscale them to **1920×1080**
-- preserve the original directory structure
-- encode the intermediate files using **FFV1** (a lossless video codec)
+```
+outputs/bitrate_ladder_folder_upscaled/
+├── DOTA2_60f_420_1080p30_ffv1/
+│   ├── 216p_256k_up1080p_ffv1.mkv
+│   ├── 360p_512k_up1080p_ffv1.mkv
+│   └── ...
+```
+
+## Step 2 — Compute quality metrics
+
+Reference videos should exist one per sequence, named after the sequence folder.
+
+Example:
+
+```
+reference/
+├── DOTA2_60f_420_1080p30_ffv1.mkv
+├── BQTerrace_60f_420_1080p30_ffv1.mkv
+```
+
+Run:
+
+```bash
+vq metrics \
+  -I outputs/bitrate_ladder_folder_upscaled \
+  -R reference \
+  -i "**/*.mkv" \
+  -o outputs/metrics_logs
+```
+
+Example output:
+
+```
+outputs/metrics_logs/
+├── DOTA2_60f_420_1080p30_ffv1/
+│   ├── 216p_256k_up1080p_ffv1.json
+│   ├── 360p_512k_up1080p_ffv1.json
+│   └── ...
+```
+
+Each JSON file contains frame-level and pooled metrics from libvmaf.

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import subprocess
-import time
 from dataclasses import dataclass
 from pathlib import Path
+
+from vq.ffmpeg import FFmpegRunner
 
 
 @dataclass(slots=True)
@@ -51,13 +51,12 @@ def make_output_path(
     return out_dir / f"{input_path.stem}{suffix}{options.output_ext}"
 
 
-def build_ffmpeg_command(
+def build_ffmpeg_args(
     input_path: Path,
     output_path: Path,
     options: UpscaleOptions,
 ) -> list[str]:
-    cmd = [
-        options.ffmpeg_bin,
+    args = [
         "-hide_banner",
         "-loglevel",
         "error",
@@ -72,10 +71,10 @@ def build_ffmpeg_command(
     ]
 
     if options.video_codec == "ffv1":
-        cmd += ["-level", str(options.ffv1_level)]
+        args += ["-level", str(options.ffv1_level)]
 
-    cmd.append(str(output_path))
-    return cmd
+    args.append(str(output_path))
+    return args
 
 
 def upscale_file(
@@ -91,31 +90,22 @@ def upscale_file(
             "status": "skipped",
             "elapsed_s": None,
             "stderr": "",
+            "cmd": None,
         }
 
-    cmd = build_ffmpeg_command(input_path, output_path, options)
+    runner = FFmpegRunner(executable=options.ffmpeg_bin, dry_run=dry_run)
 
-    if dry_run:
-        return {
-            "input": str(input_path),
-            "output": str(output_path),
-            "status": "dry-run",
-            "elapsed_s": None,
-            "stderr": "",
-            "cmd": cmd,
-        }
-
-    t0 = time.time()
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    elapsed = time.time() - t0
+    args = build_ffmpeg_args(input_path, output_path, options)
+    result = runner.run(args)
 
     return {
         "input": str(input_path),
         "output": str(output_path),
         "status": "done" if result.returncode == 0 else "error",
-        "elapsed_s": elapsed,
+        "elapsed_s": result.elapsed_s,
         "stderr": result.stderr.strip(),
-        "cmd": cmd,
+        "cmd": result.cmd,
+        "dry_run": result.dry_run,
     }
 
 

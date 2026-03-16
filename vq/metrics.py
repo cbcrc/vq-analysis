@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from vq.ffmpeg import FFmpegRunner
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -105,6 +108,7 @@ def run_metrics(
     opts = options or MetricsOptions()
 
     if log_path.exists() and not opts.overwrite:
+        logger.warning("Skipping existing metrics log: %s", log_path.name)
         return {
             "dist": str(dist_path),
             "ref": str(ref_path),
@@ -115,6 +119,12 @@ def run_metrics(
             "cmd": None,
             "dry_run": False,
         }
+
+    logger.debug(
+        "Computing metrics for %s (reference: %s)",
+        dist_path.name,
+        ref_path.name,
+    )
 
     args = build_libvmaf_args(
         dist_path=dist_path,

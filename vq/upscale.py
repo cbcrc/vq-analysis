@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
 from vq.ffmpeg import FFmpegRunner
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -84,6 +87,7 @@ def upscale_file(
     dry_run: bool = False,
 ) -> dict:
     if output_path.exists() and not options.overwrite:
+        logger.debug(f"Output exists and overwrite is disabled: {output_path}")
         return {
             "input": str(input_path),
             "output": str(output_path),
@@ -121,7 +125,11 @@ def upscale_batch(
 
     results: list[dict] = []
 
-    print(f"Found {len(input_files)} input file(s).")
+    logger.info(f"Found {len(input_files)} input file(s) to upscale.")
+    logger.debug(f"Upscale output root: {output_root}")
+    if input_root is not None:
+        logger.debug(f"Upscale input root: {input_root}")
+    logger.debug("Upscale options: %s", options)
 
     for input_path in input_files:
         output_path = make_output_path(
@@ -131,6 +139,7 @@ def upscale_batch(
             options=options,
         )
 
+        logger.debug(f"Upscaling {input_path.name} -> {output_path.name}")
         result = upscale_file(
             input_path=input_path,
             output_path=output_path,
@@ -141,17 +150,18 @@ def upscale_batch(
 
         status = result["status"]
         if status == "done":
-            print(
-                f"[OK] {input_path.name} -> {output_path.name} "
-                f"({result['elapsed_s']:.1f}s)"
+            logger.info(
+                f"Completed upscale: {input_path.name} -> {output_path.name}",
             )
         elif status == "skipped":
-            print(f"[SKIP] {output_path.name}")
+            logger.warning(f"Skipping existing output: {output_path}")
         elif status == "dry-run":
-            print(f"[DRY-RUN] {output_path.name}")
+            logger.info(f"DRY RUN: {input_path.name} -> {output_path.name}")
         else:
-            print(f"[ERROR] {input_path.name}")
+            logger.error(f"Upscale failed for {input_path}")
             if result["stderr"]:
-                print(result["stderr"])
+                logger.error(
+                    f"FFmpeg stderr for {input_path.name}:\n{result['stderr']}"
+                )
 
     return results

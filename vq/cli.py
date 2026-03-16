@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import sys
 from glob import glob
@@ -11,6 +12,25 @@ from vq.metrics import (
     run_metrics,
 )
 from vq.upscale import UpscaleOptions, upscale_batch
+
+logger = logging.getLogger(__name__)
+
+
+def _configure_logging(debug: bool = False, quiet: bool = False) -> None:
+    if debug and quiet:
+        raise ValueError("Cannot enable both debug and quiet logging.")
+
+    if debug:
+        level = logging.DEBUG
+    elif quiet:
+        level = logging.WARNING
+    else:
+        level = logging.INFO
+
+    logging.basicConfig(
+        level=level,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
 
 
 def _expand_inputs(patterns: str | list[str], input_root: Path | None) -> list[Path]:
@@ -40,6 +60,18 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="vq",
         description="Video Quality Analysis tools",
+    )
+
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging.",
+    )
+
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Only show warnings and errors.",
     )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -226,13 +258,17 @@ def _run_metrics(args: argparse.Namespace) -> int:
     reference_root = Path(args.reference_root).resolve()
     output_root = Path(args.output).resolve()
 
+    logger.debug("Metrics input root: %s", input_root)
+    logger.debug("Metrics reference root: %s", reference_root)
+    logger.debug("Metrics output root: %s", output_root)
+
     dist_files = _expand_inputs(args.input, input_root)
 
     if not dist_files:
-        print("No input files matched the provided pattern(s).", file=sys.stderr)
+        logger.error("No input files matched the provided pattern(s).")
         return 1
 
-    print(f"Matched {len(dist_files)} distorted input file(s).")
+    logger.info("Matched %d distorted input file(s).", len(dist_files))
 
     options = MetricsOptions(
         ffmpeg_bin=args.ffmpeg,
@@ -242,6 +278,8 @@ def _run_metrics(args: argparse.Namespace) -> int:
         feature_float_ms_ssim=not args.no_float_ms_ssim,
         feature_ciede=args.ciede,
     )
+
+    logger.debug("Metrics options: %s", options)
 
     results = []
 
@@ -259,6 +297,10 @@ def _run_metrics(args: argparse.Namespace) -> int:
             dist_root=input_root,
         )
 
+        logger.debug("Metrics input: %s", dist_path)
+        logger.debug("Reference path: %s", ref_path)
+        logger.debug("Log output path: %s", log_path)
+
         if not ref_path.exists():
             results.append(
                 {
@@ -272,7 +314,7 @@ def _run_metrics(args: argparse.Namespace) -> int:
                     "dry_run": False,
                 }
             )
-            print(f"[MISSING-REF] {rel_path}")
+            logger.warning("Missing reference for %s", rel_path)
             continue
 
         result = run_metrics(
@@ -285,15 +327,15 @@ def _run_metrics(args: argparse.Namespace) -> int:
         results.append(result)
 
         if result["dry_run"]:
-            print(f"[DRY-RUN] {rel_path}")
+            logger.info("DRY RUN: %s", rel_path)
         elif result["status"] == "done":
-            print(f"[OK] {rel_path} ({result['elapsed_s']:.1f}s)")
+            logger.info("Computed metrics: %s", rel_path)
         elif result["status"] == "skipped":
-            print(f"[SKIP] {rel_path}")
+            logger.warning("Skipping existing metrics log for %s", rel_path)
         else:
-            print(f"[ERROR] {rel_path}")
+            logger.error("Metrics computation failed for %s", rel_path)
             if result["stderr"]:
-                print(result["stderr"])
+                logger.debug("FFmpeg stderr for %s:\n%s", rel_path, result["stderr"])
 
     num_done = sum(r["status"] == "done" for r in results)
     num_skipped = sum(r["status"] == "skipped" for r in results)
@@ -301,9 +343,13 @@ def _run_metrics(args: argparse.Namespace) -> int:
     num_errors = sum(r["status"] == "error" for r in results)
     num_dry = sum(r["dry_run"] for r in results)
 
-    print(
-        f"Summary: done={num_done}, skipped={num_skipped}, "
-        f"missing-reference={num_missing_ref}, dry-run={num_dry}, errors={num_errors}"
+    logger.info(
+        "Summary: done=%d, skipped=%d, missing-reference=%d, dry-run=%d, errors=%d",
+        num_done,
+        num_skipped,
+        num_missing_ref,
+        num_dry,
+        num_errors,
     )
 
     return 1 if num_errors else 0
@@ -312,6 +358,8 @@ def _run_metrics(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
+
+    _configure_logging(debug=args.debug, quiet=args.quiet)
 
     if args.command == "metrics":
         return _run_metrics(args)

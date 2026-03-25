@@ -116,3 +116,22 @@ outputs/metrics_logs/
 ```
 
 Each JSON file contains frame-level and pooled metrics from libvmaf.
+
+### Selecting a VMAF model (optional)
+
+You can explicitly select the libvmaf model using `--model`.
+
+Examples:
+
+```bash
+# Standard HD model (default in most FFmpeg builds)
+vq metrics ... --model "version=vmaf_v0.6.3"
+
+# 4K model (recommended for 4K evaluation)
+vq metrics ... --model "version=vmaf_4k_v0.6.1"
+
+# Phone model (mobile viewing conditions)
+vq metrics ... --model "version=vmaf_v0.6.3:phone_model=1"
+```
+
+If `--model` is not specified, the default model from your FFmpeg/libvmaf build is used.

@@ -82,7 +82,7 @@ def build_libvmaf_args(
     ]
 
     if options.model:
-        libvmaf_parts.append(f"model={options.model}")
+        libvmaf_parts.append(f"model=version={options.model}")
 
     feature_string = build_libvmaf_feature_string(options)
     if feature_string:

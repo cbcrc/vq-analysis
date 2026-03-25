@@ -21,6 +21,7 @@ class MetricsOptions:
     feature_psnr: bool = True
     feature_float_ms_ssim: bool = True
     feature_ciede: bool = False
+    model: str | None = None
 
 
 def infer_reference_path(
@@ -79,6 +80,9 @@ def build_libvmaf_args(
         f"log_path={log_path}",
         f"log_fmt={options.log_fmt}",
     ]
+
+    if options.model:
+        libvmaf_parts.append(f"model={options.model}")
 
     feature_string = build_libvmaf_feature_string(options)
     if feature_string:

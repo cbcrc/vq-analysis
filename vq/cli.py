@@ -142,6 +142,20 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Enable CIEDE feature extraction.",
     )
+    metrics_parser.add_argument(
+        "--model",
+        default=None,
+        help=(
+            "Optional libvmaf model string. Examples:\n"
+            '  "version=vmaf_v0.6.3"                (default HD model)\n'
+            '  "version=vmaf_4k_v0.6.1"             (recommended for 4K)\n'
+            '  "version=vmaf_v0.6.3:phone_model=1"  (mobile/phone viewing)\n'
+            '  "version=vmaf_v0.6.3:neg=1"          (penalize sharpening)\n'
+            "\n"
+            "If omitted, FFmpeg/libvmaf default model is used.\n"
+            "Note: supported options (e.g. neg, phone_model) depend on your build."
+        ),
+    )
 
     upscale_parser = subparsers.add_parser(
         "upscale",
@@ -291,6 +305,7 @@ def _run_metrics(args: argparse.Namespace) -> int:
         feature_psnr=not args.no_psnr,
         feature_float_ms_ssim=not args.no_float_ms_ssim,
         feature_ciede=args.ciede,
+        model=args.model,
     )
 
     logger.debug("Metrics options: %s", options)

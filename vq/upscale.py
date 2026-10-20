@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class UpscaleOptions:
     ffmpeg_bin: str = "ffmpeg"
+    prefix: Path = "."
     target_width: int = 1920
     target_height: int = 1080
     scaler: str = "lanczos"
@@ -65,7 +66,7 @@ def build_ffmpeg_args(
         "error",
         "-y" if options.overwrite else "-n",
         "-i",
-        str(input_path),
+        str(options.prefix / input_path),
         "-vf",
         build_filter_string(options),
         "-c:v",
@@ -76,7 +77,7 @@ def build_ffmpeg_args(
     if options.video_codec == "ffv1":
         args += ["-level", str(options.ffv1_level)]
 
-    args.append(str(output_path))
+    args.append(str(options.prefix / output_path))
     return args
 
 

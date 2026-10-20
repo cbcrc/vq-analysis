@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass(slots=True)
 class MetricsOptions:
     ffmpeg_bin: str = "ffmpeg"
+    prefix: Path = "."
     n_threads: int = max(1, os.cpu_count() // 2)
     log_fmt: str = "json"
     overwrite: bool = False
@@ -77,7 +78,7 @@ def build_libvmaf_args(
 ) -> list[str]:
     libvmaf_parts = [
         f"n_threads={options.n_threads}",
-        f"log_path={log_path}",
+        f"log_path={options.prefix / log_path}",
         f"log_fmt={options.log_fmt}",
     ]
 
@@ -95,9 +96,9 @@ def build_libvmaf_args(
         "-loglevel",
         "error",
         "-i",
-        str(dist_path),
+        str(options.prefix / dist_path),
         "-i",
-        str(ref_path),
+        str(options.prefix / ref_path),
         "-lavfi",
         libvmaf_filter,
         "-f",

@@ -30,6 +30,8 @@ class FFmpegRunner:
         self.dry_run = dry_run
 
     def validate(self) -> None:
+        if self.executable.startswith("docker run"):
+            return 0
         if which(self.executable) is None:
             msg = (
                 f'FFmpeg executable "{self.executable}" was not found. '
@@ -40,7 +42,8 @@ class FFmpegRunner:
             raise FileNotFoundError(msg)
 
     def run(self, args: list[str]) -> FFmpegResult:
-        cmd = [self.executable, *args]
+        cmd = self.executable.split(' ') + [*args]
+        logger.info(f"Command: {' '.join(cmd)}")
 
         if self.dry_run:
             logger.info("DRY RUN: %s", cmd)

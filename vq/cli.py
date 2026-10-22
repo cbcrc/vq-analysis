@@ -124,7 +124,8 @@ def _build_parser() -> argparse.ArgumentParser:
     metrics_parser.add_argument("--ffmpeg", default="ffmpeg")
     metrics_parser.add_argument(
         "--prefix",
-        default=".",
+        type=Path,
+        default=Path("."),
         help='File prefix in the execution context (like in containers, default: ".").',
     )
     metrics_parser.add_argument(
@@ -222,7 +223,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     upscale_parser.add_argument(
         "--prefix",
-        default=".",
+        type=Path,
+        default=Path("."),
         help='File prefix in the execution context (like in containers, default: ".").',
     )
     upscale_parser.add_argument(

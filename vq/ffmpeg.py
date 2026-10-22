@@ -30,6 +30,9 @@ class FFmpegRunner:
         self.dry_run = dry_run
 
     def validate(self) -> None:
+        cmd = shlex.split(self.executable)
+        if not cmd or which(cmd[0]) is None:
+            raise FileNotFoundError(...)
         if which(self.executable) is None:
             msg = (
                 f'FFmpeg executable "{self.executable}" was not found. '
@@ -40,7 +43,8 @@ class FFmpegRunner:
             raise FileNotFoundError(msg)
 
     def run(self, args: list[str]) -> FFmpegResult:
-        cmd = [self.executable, *args]
+        cmd = shlex.split(self.executable) + args
+        logger.info(f"Command: {' '.join(cmd)}")
 
         if self.dry_run:
             logger.info("DRY RUN: %s", cmd)

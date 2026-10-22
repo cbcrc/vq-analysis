@@ -135,3 +135,20 @@ vq metrics ... --model "version=vmaf_v0.6.3:phone_model=1"
 ```
 
 If `--model` is not specified, the default model from your FFmpeg/libvmaf build is used.
+
+## User docker image
+
+If ffmpeg doesn't have libvmaf and compiling is not an option, it is possible to use a docker container as a wrapper by using `--ffmpeg` and `--prefix` options.
+
+Example: `linuxserver/ffmpeg:latest` docker image has `/bin/usr/ffmpeg` as entrypoint and `/config`
+as the working directory:
+
+```bash
+vq metrics \
+  -I outputs/bitrate_ladder_folder_upscaled \
+  -R reference \
+  -i "**/*.mkv" \
+  -o outputs/metrics_logs \
+  --ffmpeg "docker run --rm -it -v ./:/config linuxserver/ffmpeg:latest" \
+  --prefix /config
+```

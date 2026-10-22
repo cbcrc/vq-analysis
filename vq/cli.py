@@ -123,6 +123,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     metrics_parser.add_argument("--ffmpeg", default="ffmpeg")
     metrics_parser.add_argument(
+        "--prefix",
+        type=Path,
+        default=Path("."),
+        help='File prefix in the execution context (like in containers, default: ".").',
+    )
+    metrics_parser.add_argument(
         "--threads", type=int, default=max(1, os.cpu_count() // 2)
     )
     metrics_parser.add_argument("--overwrite", action="store_true")
@@ -216,6 +222,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help='FFmpeg executable to use (default: "ffmpeg").',
     )
     upscale_parser.add_argument(
+        "--prefix",
+        type=Path,
+        default=Path("."),
+        help='File prefix in the execution context (like in containers, default: ".").',
+    )
+    upscale_parser.add_argument(
         "--fps",
         default=None,
         help="Optional FPS override (example: 30000/1001). "
@@ -249,6 +261,7 @@ def _run_upscale(args: argparse.Namespace) -> int:
 
     options = UpscaleOptions(
         ffmpeg_bin=args.ffmpeg,
+        prefix=args.prefix,
         target_width=args.width,
         target_height=args.height,
         scaler=args.scaler,
@@ -300,6 +313,7 @@ def _run_metrics(args: argparse.Namespace) -> int:
 
     options = MetricsOptions(
         ffmpeg_bin=args.ffmpeg,
+        prefix=args.prefix,
         n_threads=args.threads,
         overwrite=args.overwrite,
         feature_psnr=not args.no_psnr,
